@@ -1,5 +1,5 @@
 import streamlit as st
-from tabs import informacije, opis, parcela, faktorji, stavbe, stanovanja, klet, ekonomika, optimizacija, izpis
+from tabs import informacije, parcela, faktorji, stavbe, stanovanja, klet, ekonomika, optimizacija, izpis
 
 st.set_page_config(page_title="Urbanistično-ekonomska analiza", layout="wide")
 st.title("Urbanistično-ekonomska analiza poslovno-stanovanjskega niza")
@@ -7,7 +7,7 @@ st.title("Urbanistično-ekonomska analiza poslovno-stanovanjskega niza")
 if "inputs" not in st.session_state:
     st.session_state.inputs = {
         "parcela_m2": 5000,
-        "fi": 1.34,
+        "fi": 1.35,
         "fz": 0.35,
         "fzp_min_pct": 20,
 
@@ -65,7 +65,7 @@ tab_objs = st.tabs([
     "Klet",
     "Ekonomika",
     "Optimizacija",
-    "Opis projekta in izpis",
+    "Izpis",
 ])
 
 with tab_objs[0]:
@@ -85,9 +85,6 @@ with tab_objs[6]:
 with tab_objs[7]:
     inputs = optimizacija.render_tab(inputs)
 with tab_objs[8]:
-    st.subheader("Opis projekta in izpis")
-    inputs = opis.render_tab(inputs, embedded=True)
-    st.divider()
-    inputs = izpis.render_tab(inputs, embedded=True)
+    inputs = izpis.render_tab(inputs)
 
 st.session_state.inputs = inputs

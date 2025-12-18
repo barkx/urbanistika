@@ -14,6 +14,7 @@ def render_tab(inputs: dict, embedded: bool = False):
         st.subheader("Opis projekta")
 
     r = compute(inputs)
+    # Opis je zdaj del zavihka "Izpis". V ločenem zavihku ga pustimo brez TXT izvoza.
     render_dashboard(r, net_to_gross=inputs["net_to_gross"])
 
     # Extract data
@@ -54,11 +55,6 @@ Projekt je trenutno ocenjen kot: **{r['status']}**."""
 
     st.markdown(text)
 
-    st.download_button(
-        "⬇️ Prenesi opis (TXT)",
-        data=text,
-        file_name=(code or "opis_projekta") + ".txt",
-        mime="text/plain"
-    )
+    # TXT izvoz odstranjen (ostane samo PDF v zavihku "Izpis").
 
     return inputs

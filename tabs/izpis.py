@@ -1,7 +1,6 @@
 import streamlit as st
 from core import compute
-from ui_dashboard import render_dashboard
-from pdf_export import build_pdf
+from pdf_export import build_pdf, build_project_description_markdown
 
 def render_tab(inputs: dict, embedded: bool = False):
     """Render the PDF export section.
@@ -12,10 +11,13 @@ def render_tab(inputs: dict, embedded: bool = False):
         st.subheader("Izpis podatkov (PDF)")
 
     r = compute(inputs)
-    render_dashboard(r, net_to_gross=inputs["net_to_gross"])
+
+    # Preview: expanded project description (no dashboard duplication)
+    st.markdown("#### Opis projekta (razširjeno)")
+    st.markdown(build_project_description_markdown(inputs, r))
 
     st.markdown("#### Prenos poročila")
-    st.caption("PDF vključuje samo opis projekta.")
+    st.caption("PDF vključuje samo opis projekta (razširjena verzija zgoraj).")
 
     try:
         pdf_bytes = build_pdf(inputs, r)
