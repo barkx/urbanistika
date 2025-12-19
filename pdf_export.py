@@ -3,6 +3,9 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Dict, Any, List
 import os
+import re
+from pathlib import Path
+
 
 def _safe(v: Any) -> str:
     return "" if v is None else str(v)
@@ -28,23 +31,19 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
     scenario = inputs.get("scenario", "")
     net_to_gross = float(inputs.get("net_to_gross", 0) or 0)
 
-    # Program
     units = int(r.get("units", 0) or 0)
     units_mode = _safe(r.get("units_mode") or inputs.get("units_mode") or "")
 
-    # Areas
     btp_above = float(r.get("btp_above", 0) or 0)
     btp_below = float(r.get("btp_below", 0) or 0)
     net_area = float(r.get("net_area", 0) or 0)
 
-    # Parking
     pm_total = int(r.get("pm_total", 0) or 0)
     pm_basement = int(r.get("pm_in_basement", 0) or 0)
     pm_surface = int(r.get("pm_on_surface", 0) or 0)
     pm_per_unit = float(inputs.get("pm_na_stanovanje", 0) or 0)
     visitor_share = float(inputs.get("visitor_share", 0) or 0)
 
-    # Typologies (structure)
     typ = inputs.get("typologies", []) or []
 
     econ = r.get("econ", {}) or {}
@@ -52,7 +51,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
     revenue = float(econ.get("revenue", 0) or 0)
     invest = float(econ.get("total_invest", 0) or 0)
 
-    # Local formatting (kept simple and robust)
     def area_fmt(v: float) -> str:
         return f"{v:,.0f} m²".replace(",", " ")
 
@@ -72,23 +70,7 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
             return "2 kletni etaži (garaža)"
         return s or "—"
 
-    def typology_lines() -> str:
-        if not typ:
-            return "—"
-        parts = []
-        for t in typ:
-            try:
-                name = _safe(t.get("name", ""))
-                share = float(t.get("share_pct", 0) or 0)
-                avg = float(t.get("avg_m2", 0) or 0)
-                parts.append(f"{name}: {share:.0f} % (≈ {avg:.0f} m²)")
-            except Exception:
-                continue
-        return "<br/>".join(parts) if parts else "—"
-
-    # --- Template helpers -------------------------------------------------
     def etaznost() -> str:
-        # floors = total above-ground floors (incl. P)
         return f"P + {max(floors - 1, 0)}"
 
     def klet_levels_text() -> str:
@@ -131,7 +113,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         "in prometnim povezavam."
     )
 
-    # --- Section 2 --------------------------------------------------------
     fi_val = float(r.get("FI", 0) or 0)
     fi_lim = float(inputs.get("fi", 0) or 0)
     fz_val = float(r.get("building_footprint", 0) or 0)
@@ -152,7 +133,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         "dovoljeni izrabi zemljišča."
     )
 
-    # --- Section 3 --------------------------------------------------------
     p3 = (
         "<b>3. Program in struktura stanovanj</b><br/><br/>"
         f"<b>Skupno število stanovanj:</b> {units}<br/><br/>"
@@ -166,7 +146,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         "podzemno: 0 m² (stanovanjski program)"
     )
 
-    # --- Section 4 --------------------------------------------------------
     p4 = (
         "<b>4. Klet, parkiranje in prometna ureditev</b><br/><br/>"
         "<b>Tip kleti:</b><br/><br/>"
@@ -185,7 +164,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         "intervencijskim, dostavnim in servisnim vozilom."
     )
 
-    # --- Section 5 --------------------------------------------------------
     growing_area = float(r.get("growing_area", 0) or 0)
     p5 = (
         "<b>5. Zunanja ureditev in raščen teren</b><br/><br/>"
@@ -194,7 +172,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         "Prednost je minimalno površinsko parkiranje, kar izboljšuje kakovost bivanja in vizualno podobo soseske."
     )
 
-    # --- Section 6 --------------------------------------------------------
     p6 = (
         "<b>6. Komunalna opremljenost in ITS</b><br/><br/>"
         "Objekti bodo priključeni na obstoječo oziroma predvideno komunalno infrastrukturo:<br/><br/>"
@@ -206,7 +183,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         "logično razporeditev funkcionalnih površin v sklopu parcelacije in zunanje ureditve."
     )
 
-    # --- Section 7 --------------------------------------------------------
     p7 = (
         "<b>7. Ekonomski povzetek (ocena)</b><br/><br/>"
         f"Skupna investicijska vrednost: {eur_fmt(invest)}<br/><br/>"
@@ -214,7 +190,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         f"Razlika (rezultat projekta): {eur_fmt(margin)}"
     )
 
-    # --- Section 8 --------------------------------------------------------
     p8 = (
         "<b>8. Zaključna ocena</b><br/><br/>"
         f"Projekt je z vidika urbanističnih kazalnikov, prostorske izrabe in bivalne kakovosti ocenjen kot <b>{_safe(r.get('status'))}</b>. "
@@ -224,7 +199,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
         "• izboljšanju prodajnih cen oziroma faznosti izvedbe."
     )
 
-    # Optional title line (project name/code) if present
     prefix = ""
     if proj or code:
         prefix = f"<b>{_safe(proj)}</b> {('(' + _safe(code) + ')') if code else ''}".strip()
@@ -238,7 +212,6 @@ def _build_project_description_html(inputs: Dict[str, Any], r: Dict[str, Any]) -
 
 def build_project_description_markdown(inputs: Dict[str, Any], results: Dict[str, Any]) -> str:
     """A readable (Streamlit-friendly) markdown version of the project description."""
-
     html_paras = _build_project_description_html(inputs, results)
     md_parts: List[str] = []
     for para in html_paras:
@@ -247,10 +220,15 @@ def build_project_description_markdown(inputs: Dict[str, Any], results: Dict[str
         md_parts.append(md)
     return "\n\n".join(md_parts)
 
+
+# ============================================================
+# PDF (šumniki + bold + večji font za poglavja 1.,2.,3.,...)
+# ============================================================
 def build_pdf(inputs: Dict[str, Any], results: Dict[str, Any]) -> bytes:
     """Build a short PDF (A4) that includes ONLY the project description (Opis projekta).
 
-    Uses an embedded DejaVuSans font to support Slovene characters (šumniki).
+    Uses DejaVuSans font family to support Slovene characters (šumniki) and true bold.
+    Section headings (1., 2., 3., ...) are rendered in a larger font.
     """
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -259,9 +237,48 @@ def build_pdf(inputs: Dict[str, Any], results: Dict[str, Any]) -> bytes:
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
 
-    here = os.path.dirname(__file__)
-    font_path = os.path.join(here, "assets", "DejaVuSans.ttf")
-    pdfmetrics.registerFont(TTFont("DejaVuSans", font_path))
+    # --- font paths (robust) ---
+    here = Path(__file__).resolve().parent
+
+    # poskusi tipične lokacije v projektu
+    candidate_regular = [
+        here / "assets" / "fonts" / "DejaVuSans.ttf",
+        here / "assets" / "DejaVuSans.ttf",
+        Path("assets/fonts/DejaVuSans.ttf"),
+        Path("assets/DejaVuSans.ttf"),
+    ]
+    candidate_bold = [
+        here / "assets" / "fonts" / "DejaVuSans-Bold.ttf",
+        here / "assets" / "DejaVuSans-Bold.ttf",
+        Path("assets/fonts/DejaVuSans-Bold.ttf"),
+        Path("assets/DejaVuSans-Bold.ttf"),
+    ]
+
+    regular_path = next((p for p in candidate_regular if p.exists()), None)
+    bold_path = next((p for p in candidate_bold if p.exists()), None)
+
+    if not regular_path:
+        raise FileNotFoundError(
+            "Ne najdem DejaVuSans.ttf. Dodaj ga npr. v assets/fonts/DejaVuSans.ttf."
+        )
+
+    # --- register fonts + family mapping (da <b> deluje) ---
+    registered = set(pdfmetrics.getRegisteredFontNames())
+    if "DejaVuSans" not in registered:
+        pdfmetrics.registerFont(TTFont("DejaVuSans", str(regular_path)))
+
+    if bold_path and "DejaVuSans-Bold" not in registered:
+        pdfmetrics.registerFont(TTFont("DejaVuSans-Bold", str(bold_path)))
+
+    registered = set(pdfmetrics.getRegisteredFontNames())
+    if "DejaVuSans-Bold" in registered:
+        pdfmetrics.registerFontFamily(
+            "DejaVuSans",
+            normal="DejaVuSans",
+            bold="DejaVuSans-Bold",
+            italic="DejaVuSans",
+            boldItalic="DejaVuSans-Bold",
+        )
 
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
@@ -275,6 +292,18 @@ def build_pdf(inputs: Dict[str, Any], results: Dict[str, Any]) -> bytes:
         leading=22,
         spaceAfter=10,
     )
+
+    # Večji font za poglavja (1.,2.,3.,...)
+    section_style = ParagraphStyle(
+        "section_dv",
+        parent=styles["Heading2"],
+        fontName="DejaVuSans-Bold" if "DejaVuSans-Bold" in registered else "DejaVuSans",
+        fontSize=13.5,
+        leading=17,
+        spaceBefore=8,
+        spaceAfter=6,
+    )
+
     body_style = ParagraphStyle(
         "body_dv",
         parent=styles["BodyText"],
@@ -296,7 +325,7 @@ def build_pdf(inputs: Dict[str, Any], results: Dict[str, Any]) -> bytes:
             ir = ImageReader(img_buf)
             iw, ih = ir.getSize()
             max_w = doc.width
-            max_h = doc.height * 0.35  # keep the map reasonably compact
+            max_h = doc.height * 0.35
             scale = max_w / float(iw) if iw else 1.0
             w = iw * scale
             h = ih * scale
@@ -308,15 +337,37 @@ def build_pdf(inputs: Dict[str, Any], results: Dict[str, Any]) -> bytes:
             story.append(Image(img_buf, width=w, height=h))
             story.append(Spacer(1, 12))
         except Exception:
-            # If the image fails to render, just skip it.
             pass
 
-    for i, para in enumerate(_build_project_description_html(inputs, results)):
-        if i == 0:
-            # if the first line is a prefix (project name/code), keep it compact
+    # --- helper: split "<b>1. ...</b><br/><br/>BODY" into heading + body ---
+    section_re = re.compile(r"^\s*<b>\s*(\d+\.\s*[^<]+)\s*</b><br\s*/><br\s*/>(.*)$", re.DOTALL)
+
+    html_paras = _build_project_description_html(inputs, results)
+
+    for i, para in enumerate(html_paras):
+        # 1) prefix (project name/code) – keep compact
+        if i == 0 and para.strip().startswith("<b>") and ("1." not in para[:20]):
             story.append(Paragraph(para, body_style))
             story.append(Spacer(1, 8))
             continue
+
+        m = section_re.match(para.strip())
+        if m:
+            heading_text = m.group(1).strip()
+            body_html = (m.group(2) or "").strip()
+
+            # heading larger
+            story.append(Paragraph(heading_text, section_style))
+
+            # body normal
+            if body_html:
+                story.append(Paragraph(body_html, body_style))
+                story.append(Spacer(1, 10))
+            else:
+                story.append(Spacer(1, 8))
+            continue
+
+        # fallback
         story.append(Paragraph(para, body_style))
         story.append(Spacer(1, 10))
 
