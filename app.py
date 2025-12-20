@@ -1,6 +1,6 @@
 import streamlit as st
 from pathlib import Path
-from tabs import informacije, parcela, faktorji, stavbe, stanovanja, klet, ekonomika, optimizacija, izpis
+from tabs import informacije, parcela, faktorji, tipologije, stavbe, stanovanja, klet, ekonomika, optimizacija, izpis
 
 # =================================================
 # PAGE CONFIG
@@ -34,56 +34,6 @@ with col_title:
     )
 
 st.markdown("---")
-
-# =================================================
-# IZBIRA KALKULATORJA
-# =================================================
-if "layout_mode" not in st.session_state:
-    st.session_state.layout_mode = "lamela"
-
-st.markdown("### Izberite zasnovo stavb")
-
-button_cols = st.columns(3)
-
-layout_buttons = [
-    {
-        "label": "Lamelne stavbe",
-        "caption": "Aktivno – lamelna zasnova",
-        "image": Path("assets/p2.png"),
-        "on_click": lambda: st.session_state.update({"layout_mode": "lamela"}),
-        "type": "primary",
-        "disabled": False,
-    },
-    {
-        "label": "Kare / obroč (kmalu)",
-        "caption": "Placeholder za prihodnjo zasnovo",
-        "image": Path("assets/p1_g.png"),
-        "on_click": None,
-        "type": "secondary",
-        "disabled": True,
-    },
-    {
-        "label": "Točkovna zazidava (kmalu)",
-        "caption": "Placeholder za prihodnjo zasnovo",
-        "image": Path("assets/p3_g.png"),
-        "on_click": None,
-        "type": "secondary",
-        "disabled": True,
-    },
-]
-
-for col, cfg in zip(button_cols, layout_buttons):
-    with col:
-        if cfg["image"].exists():
-            st.image(str(cfg["image"]), use_column_width=True)
-        if st.button(
-            cfg["label"],
-            type=cfg["type"],
-            use_container_width=True,
-            disabled=cfg["disabled"],
-        ) and cfg["on_click"]:
-            cfg["on_click"]()
-        st.caption(cfg["caption"])
 
 # =================================================
 # SESSION STATE
@@ -137,6 +87,7 @@ tab_objs = st.tabs([
     "Informacije",
     "Parcela",
     "Faktorji",
+    "Tipologije",
     "Stavbe",
     "Stanovanja",
     "Klet",
@@ -152,16 +103,18 @@ with tab_objs[1]:
 with tab_objs[2]:
     inputs = faktorji.render_tab(inputs)
 with tab_objs[3]:
-    inputs = stavbe.render_tab(inputs)
+    inputs = tipologije.render_tab(inputs)
 with tab_objs[4]:
-    inputs = stanovanja.render_tab(inputs)
+    inputs = stavbe.render_tab(inputs)
 with tab_objs[5]:
-    inputs = klet.render_tab(inputs)
+    inputs = stanovanja.render_tab(inputs)
 with tab_objs[6]:
-    inputs = ekonomika.render_tab(inputs)
+    inputs = klet.render_tab(inputs)
 with tab_objs[7]:
-    inputs = optimizacija.render_tab(inputs)
+    inputs = ekonomika.render_tab(inputs)
 with tab_objs[8]:
+    inputs = optimizacija.render_tab(inputs)
+with tab_objs[9]:
     inputs = izpis.render_tab(inputs)
 
 st.session_state.inputs = inputs
