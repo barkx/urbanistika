@@ -64,7 +64,4 @@ def render_tab(inputs: dict):
 
     r = compute(inputs)
     render_dashboard(r, net_to_gross=inputs["net_to_gross"])
-
-    st.markdown("#### Končno število stanovanj")
-    st.metric("Št. stanovanj", int(r["units"]))
     return inputs
