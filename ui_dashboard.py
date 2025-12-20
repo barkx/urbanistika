@@ -74,7 +74,7 @@ def render_dashboard(r: dict, show_detail: bool = True, net_to_gross: float = 0.
         )
 
     # --- stanovanja ---
-    mode_tag = "AUTO" if r["units_mode"] == "AUTO" else "ROČNO"
+    mode_tag = "RAČUNSKO" if r["units_mode"] == "RAČUNSKO" else "AVTO"
     bottom_row[0].metric("Št. stanovanj", f"{r['units']}", mode_tag)
 
     # --- investicija ---

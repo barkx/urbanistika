@@ -14,9 +14,11 @@ def render_tab(inputs: dict):
     c1, c2, c3 = st.columns(3)
     with c1:
         st.write("Stanovanja:")
-        st.caption("AUTO nastaviš v zavihku Stanovanja.")
-        if inputs["units_mode"] == "ROČNO":
-            inputs["st_stanovanj"] = st.number_input("Št. stanovanj (ROČNO)", min_value=1, step=1, value=int(inputs["st_stanovanj"]))
+        st.caption("Način RAČUNSKO/AVTO nastaviš v zavihku Stanovanja.")
+        if inputs["units_mode"] == "AVTO":
+            inputs["st_stanovanj"] = st.number_input("Št. stanovanj (AVTO)", min_value=1, step=1, value=int(inputs["st_stanovanj"]))
+        else:
+            st.caption(f"Računski izračun predlaga {inputs['st_stanovanj']} stanovanj.")
     with c2:
         inputs["pm_na_stanovanje"] = st.number_input("PM na stanovanje", min_value=0.5, step=0.1, value=float(inputs["pm_na_stanovanje"]))
     with c3:

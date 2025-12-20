@@ -99,7 +99,7 @@ if "inputs" not in st.session_state:
         "sirina_lamele_m": 14,
         "st_etas_nadz": 4,
         "net_to_gross": 0.82,
-        "units_mode": "AUTO",
+        "units_mode": "RAČUNSKO",
         "st_stanovanj": 76,
         "default_avg_unit_m2": 60.0,
         "typologies": [

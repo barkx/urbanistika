@@ -16,7 +16,7 @@ def render_tab(inputs: dict):
     with c5:
         inputs["net_to_gross"] = st.number_input("Neto/Bruto (NFA/BTP)", min_value=0.50, max_value=0.95, step=0.01, value=float(inputs["net_to_gross"]))
 
-    st.caption("Dimenzije, etaže in neto/bruto vplivajo na NFA in avtomatsko število stanovanj (če je AUTO).")
+    st.caption("Dimenzije, etaže in neto/bruto vplivajo na NFA in računsko število stanovanj (način RAČUNSKO).")
     r = compute(inputs)
     render_dashboard(r, net_to_gross=inputs["net_to_gross"])
     return inputs

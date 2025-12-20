@@ -11,29 +11,56 @@ def render_tab(inputs: dict):
     )
     units_auto = compute_units(inputs, building_footprint)["units_auto"]
 
-    st.markdown("#### Končno število stanovanj")
-    selected_units = int(inputs.get("st_stanovanj", units_auto) or units_auto)
-    inputs["st_stanovanj"] = st.number_input(
-        "Število stanovanj",
-        min_value=1,
-        step=1,
-        value=selected_units,
-        help=f"Avtomatski izračun predlaga {units_auto} stanovanj na podlagi vnesenih parametrov."
-    )
-
+    st.markdown("#### Način določanja št. stanovanj")
     inputs["units_mode"] = st.radio(
         "Način določanja št. stanovanj",
-        ["AUTO", "ROČNO"],
-        index=0 if inputs["units_mode"] == "AUTO" else 1
+        ["RAČUNSKO", "AVTO"],
+        index=0 if inputs.get("units_mode") == "RAČUNSKO" else 1,
+        help="V načinu RAČUNSKO se število stanovanj preračuna iz znanih podatkov. V načinu AVTO lahko rezultat "
+        "ročno prilagodiš in spreminjaš deleže tipologij."
     )
 
-    if inputs["units_mode"] == "ROČNO":
-        st.caption("V načinu ROČNO se tipologije ne uporabljajo za izračun št. stanovanj.")
-    else:
-        st.caption(
-            "V načinu AUTO se št. stanovanj izračuna iz NFA (BTP_nadz × neto/bruto) / povp. velikost stanovanja, "
-            "končni rezultat pa lahko po potrebi prilagodite zgoraj."
+    st.markdown("#### Končno število stanovanj")
+    if inputs["units_mode"] == "RAČUNSKO":
+        inputs["st_stanovanj"] = units_auto
+        st.number_input(
+            "Število stanovanj (računsko)",
+            min_value=1,
+            step=1,
+            value=units_auto,
+            disabled=True,
+            help="Računski izračun zaklene število stanovanj na podlagi povprečne velikosti in razporeditve tipologij."
         )
+        st.caption(
+            f"Izračun temelji na povprečni velikosti {compute_units(inputs, building_footprint)['avg_unit_m2']:.1f} m² "
+            "in trenutni razporeditvi tipologij."
+        )
+
+        st.markdown("#### Tipologije (informativno)")
+        summary = []
+        for t in inputs["typologies"]:
+            share = float(t["share_pct"])
+            approx_units = int(round(units_auto * share / 100.0)) if units_auto else 0
+            summary.append({
+                "Tipologija": t["name"],
+                "Delež %": f"{share:.0f}",
+                "Povp. m²": f"{float(t['avg_m2']):.0f}",
+                "≈ št. enot": approx_units,
+            })
+        st.dataframe(summary, use_container_width=True, hide_index=True)
+    else:
+        selected_units = int(inputs.get("st_stanovanj", units_auto) or units_auto)
+        inputs["st_stanovanj"] = st.number_input(
+            "Število stanovanj (ročno nastavljivo)",
+            min_value=1,
+            step=1,
+            value=selected_units,
+            help=f"Računski predlog je {units_auto} stanovanj; vrednost lahko po potrebi prilagodiš."
+        )
+        st.caption(
+            "V načinu AVTO lahko spremeniš predlagano število stanovanj in deleže posameznih tipologij."
+        )
+
         st.markdown("#### Tipologije (delež + povprečna velikost)")
         for i, t in enumerate(inputs["typologies"]):
             colA, colB, colC = st.columns([2, 1, 1])
