@@ -1,6 +1,7 @@
 import streamlit as st
 from pathlib import Path
-from tabs import informacije, parcela, faktorji, tipologije, stavbe, stanovanja, klet, ekonomika, optimizacija, izpis
+from core import compute
+from tabs import informacije, parcela, faktorji, tipologije, stavbe, stanovanja, klet, ekonomika, optimizacija, comparison, izpis
 
 # =================================================
 # PAGE CONFIG
@@ -80,6 +81,25 @@ if "inputs" not in st.session_state:
 
 inputs = st.session_state.inputs
 
+# Predizračun statusa za dinamično označbo zavihkov
+status_preview = compute(inputs).get("status", "")
+opt_active = status_preview.startswith("NESKLADNO")
+opt_label = "Optimizacija" if opt_active else "Optimizacija (neaktivno)"
+
+if not opt_active:
+    st.markdown(
+        """
+        <style>
+        /* Posivi zavihek Optimizacija, dokler optimizacija ni potrebna */
+        div[data-baseweb="tab-list"] button:nth-child(9) {
+            color: #9e9e9e !important;
+            border-color: #e0e0e0 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 # =================================================
 # TABS
 # =================================================
@@ -92,7 +112,8 @@ tab_objs = st.tabs([
     "Stanovanja",
     "Klet",
     "Ekonomika",
-    "Optimizacija",
+    opt_label,
+    "Comparison",
     "Izpis",
 ])
 
@@ -115,6 +136,8 @@ with tab_objs[7]:
 with tab_objs[8]:
     inputs = optimizacija.render_tab(inputs)
 with tab_objs[9]:
+    inputs = comparison.render_tab(inputs)
+with tab_objs[10]:
     inputs = izpis.render_tab(inputs)
 
 st.session_state.inputs = inputs
