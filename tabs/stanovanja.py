@@ -1,10 +1,26 @@
 import streamlit as st
-from core import compute
+from core import compute, compute_units
 from ui_dashboard import render_dashboard
 
 
 def render_tab(inputs: dict):
     st.subheader("Stanovanja")
+
+    building_footprint = (
+        float(inputs["stevilo_lamel"]) * float(inputs["dolzina_lamele_m"]) * float(inputs["sirina_lamele_m"])
+    )
+    units_auto = compute_units(inputs, building_footprint)["units_auto"]
+
+    st.markdown("#### Končno število stanovanj")
+    selected_units = int(inputs.get("st_stanovanj", units_auto) or units_auto)
+    inputs["st_stanovanj"] = st.number_input(
+        "Število stanovanj",
+        min_value=1,
+        step=1,
+        value=selected_units,
+        help=f"Avtomatski izračun predlaga {units_auto} stanovanj na podlagi vnesenih parametrov."
+    )
+
     inputs["units_mode"] = st.radio(
         "Način določanja št. stanovanj",
         ["AUTO", "ROČNO"],
@@ -12,15 +28,12 @@ def render_tab(inputs: dict):
     )
 
     if inputs["units_mode"] == "ROČNO":
-        inputs["st_stanovanj"] = st.number_input(
-            "Število stanovanj (ročno)",
-            min_value=1,
-            step=1,
-            value=int(inputs["st_stanovanj"])
-        )
         st.caption("V načinu ROČNO se tipologije ne uporabljajo za izračun št. stanovanj.")
     else:
-        st.caption("V načinu AUTO se št. stanovanj izračuna iz NFA (BTP_nadz × neto/bruto) / povp. velikost stanovanja.")
+        st.caption(
+            "V načinu AUTO se št. stanovanj izračuna iz NFA (BTP_nadz × neto/bruto) / povp. velikost stanovanja, "
+            "končni rezultat pa lahko po potrebi prilagodite zgoraj."
+        )
         st.markdown("#### Tipologije (delež + povprečna velikost)")
         for i, t in enumerate(inputs["typologies"]):
             colA, colB, colC = st.columns([2, 1, 1])
