@@ -45,7 +45,16 @@ def render_dashboard(r: dict, show_detail: bool = True, net_to_gross: float = 0.
     top_row[1].metric("Odtis kleti", area_fmt(r["basement_footprint"]), f"Nivojev: {r['basement_levels']}")
 
     # --- FZP ---
-    top_row[2].metric("FZP (ocena)", pct_fmt(r["fzp"] * 100), f"Min: {pct_fmt(r['FZP_min'] * 100)}")
+    fzp_pct = r["fzp"] * 100
+    fzp_min_pct = r["FZP_min"] * 100
+    fzp_delta = fzp_pct - fzp_min_pct
+
+    if fzp_delta >= 0:
+        fzp_delta_label = f"+{pct_fmt(fzp_delta)} nad min ({pct_fmt(fzp_min_pct)})"
+    else:
+        fzp_delta_label = f"{pct_fmt(fzp_delta)} pod min ({pct_fmt(fzp_min_pct)})"
+
+    top_row[2].metric("FZP (ocena)", pct_fmt(fzp_pct), fzp_delta_label)
 
     # --- FI semafor: primerjava BTP_nadz z dopustnim (FI_limit * parcela) ---
     reserve_btp = r.get("fi_reserve_btp", 0.0)
