@@ -94,11 +94,15 @@ def compute(inputs: dict) -> dict:
     fz_max_footprint = FZ * P
     fz_ok = building_footprint <= fz_max_footprint + 1e-9
 
-    # Stanovanja AUTO/ROČNO
-    if inputs["units_mode"] == "AUTO":
+    # Stanovanja: RAČUNSKO (zaklenjeno na izračun) ali AVTO (ročno prilagajanje)
+    mode = inputs.get("units_mode", "RAČUNSKO")
+    if mode == "RAČUNSKO":
+        units = int(u["units_auto"])
+        inputs["st_stanovanj"] = units
+    elif mode == "AVTO":
         units = int(inputs["st_stanovanj"] or u["units_auto"])
     else:
-        units = int(inputs["st_stanovanj"])
+        units = int(inputs.get("st_stanovanj", u["units_auto"]))
 
     # Parkiranje
     pm_per_unit = float(inputs["pm_na_stanovanje"])
