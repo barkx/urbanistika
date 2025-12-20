@@ -96,7 +96,7 @@ def compute(inputs: dict) -> dict:
 
     # Stanovanja AUTO/ROČNO
     if inputs["units_mode"] == "AUTO":
-        units = int(u["units_auto"])
+        units = int(inputs["st_stanovanj"] or u["units_auto"])
     else:
         units = int(inputs["st_stanovanj"])
 
@@ -179,6 +179,7 @@ def compute(inputs: dict) -> dict:
 
         # program
         "units": units,
+        "units_auto": u["units_auto"],
         "units_mode": inputs["units_mode"],
         "floors": u["floors"],
         "btp_above": btp_above,
