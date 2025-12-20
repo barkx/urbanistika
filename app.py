@@ -36,30 +36,27 @@ with col_title:
 st.markdown("---")
 
 # =================================================
-# OPIS ORODJA
+# IZBIRA KALKULATORJA
 # =================================================
-st.markdown(
-    """
-    Orodje omogoča hitro, pregledno in konsistentno preverjanje ključnih urbanističnih
-    kazalnikov, prostorske izrabe ter programskih in kapacitetnih parametrov stanovanjskih
-    projektov v različnih fazah načrtovanja. Uporabniku omogoča analizo skladnosti z
-    izhodiščnimi prostorskimi pogoji, preverjanje razmerij med zazidljivimi površinami,
-    bruto in neto površinami ter kapacitetami stanovanjskega programa.
+if "layout_mode" not in st.session_state:
+    st.session_state.layout_mode = "lamela"
 
-    Na podlagi vnesenih podatkov orodje omogoča tudi osnovno ekonomsko ovrednotenje projekta,
-    vključno z oceno investicijskih stroškov, vrednosti zemljišča in potencialnih prihodkov,
-    kar predstavlja podporo pri zgodnjem odločanju in primerjavi različnih prostorskih in
-    programskih scenarijev. Rezultati analize se samodejno povzamejo v strukturirano PDF
-    poročilo, primerno za interno presojo, strokovno razpravo ali predstavitev investitorjem.
-    """
-)
+st.markdown("### Izberite zasnovo stavb")
 
-st.markdown(
-    """
-    *Rezultati analize so informativne narave in ne predstavljajo uradne urbanistične,
-    projektne ali investicijske dokumentacije.*
-    """
-)
+button_cols = st.columns(3)
+
+with button_cols[0]:
+    if st.button("Lamelne stavbe", type="primary", use_container_width=True):
+        st.session_state.layout_mode = "lamela"
+    st.caption("Aktivno – lamelna zasnova")
+
+with button_cols[1]:
+    st.button("Obroč / U (kmalu)", disabled=True, use_container_width=True)
+    st.caption("Placeholder za prihodnjo zasnovo")
+
+with button_cols[2]:
+    st.button("Točkovne stavbe (kmalu)", disabled=True, use_container_width=True)
+    st.caption("Placeholder za prihodnjo zasnovo")
 
 # =================================================
 # SESSION STATE
