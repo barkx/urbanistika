@@ -13,38 +13,39 @@ def eur_m2_fmt(x: float) -> str:
     return f"{x:,.0f} €/m²".replace(",", " ")
 
 def render_dashboard(r: dict, show_detail: bool = True, net_to_gross: float = 0.82):
-    # 8 kartic v eni vrsti; Status je zadnja
-    cols = st.columns(8)
+    # 8 kartic v dveh vrstah (4 + 4); Status je zadnja
+    top_row = st.columns(4)
+    bottom_row = st.columns(4)
 
     # --- FZ (odtis) semafor ---
     reserve_fz = r["fz_max_footprint"] - r["building_footprint"]
     threshold_fz = 20.0
 
     if reserve_fz < 0:
-        cols[0].metric(
+        top_row[0].metric(
             "Odtis stavb (FZ)",
             area_fmt(r["building_footprint"]),
             delta=f"+{area_fmt(abs(reserve_fz))} nad dopustnim",
             delta_color="inverse",
         )
     elif reserve_fz <= threshold_fz:
-        cols[0].metric(
+        top_row[0].metric(
             "Odtis stavb (FZ)",
             area_fmt(r["building_footprint"]),
             delta=f"⚠ MEJNO: {area_fmt(reserve_fz)} rezerve",
         )
     else:
-        cols[0].metric(
+        top_row[0].metric(
             "Odtis stavb (FZ)",
             area_fmt(r["building_footprint"]),
             delta=f"✅ OK: {area_fmt(reserve_fz)} rezerve",
         )
 
     # --- klet ---
-    cols[1].metric("Odtis kleti", area_fmt(r["basement_footprint"]), f"Nivojev: {r['basement_levels']}")
+    top_row[1].metric("Odtis kleti", area_fmt(r["basement_footprint"]), f"Nivojev: {r['basement_levels']}")
 
     # --- FZP ---
-    cols[2].metric("FZP (ocena)", pct_fmt(r["fzp"] * 100), f"Min: {pct_fmt(r['FZP_min'] * 100)}")
+    top_row[2].metric("FZP (ocena)", pct_fmt(r["fzp"] * 100), f"Min: {pct_fmt(r['FZP_min'] * 100)}")
 
     # --- FI semafor: primerjava BTP_nadz z dopustnim (FI_limit * parcela) ---
     reserve_btp = r.get("fi_reserve_btp", 0.0)
@@ -53,20 +54,20 @@ def render_dashboard(r: dict, show_detail: bool = True, net_to_gross: float = 0.
     limit_fi = r.get("FI_limit", 0.0)
 
     if reserve_btp < 0:
-        cols[3].metric(
+        top_row[3].metric(
             "FI (BTP/P)",
             f"{achieved_fi:.2f}",
             delta=f"+{area_fmt(abs(reserve_btp))} BTP nad dopustnim",
             delta_color="inverse",
         )
     elif reserve_btp <= threshold_btp:
-        cols[3].metric(
+        top_row[3].metric(
             "FI (BTP/P)",
             f"{achieved_fi:.2f}",
             delta=f"⚠ MEJNO: {area_fmt(reserve_btp)} BTP rezerve",
         )
     else:
-        cols[3].metric(
+        top_row[3].metric(
             "FI (BTP/P)",
             f"{achieved_fi:.2f}",
             delta=f"✅ OK: {area_fmt(reserve_btp)} BTP rezerve",
@@ -74,20 +75,20 @@ def render_dashboard(r: dict, show_detail: bool = True, net_to_gross: float = 0.
 
     # --- stanovanja ---
     mode_tag = "AUTO" if r["units_mode"] == "AUTO" else "ROČNO"
-    cols[4].metric("Št. stanovanj", f"{r['units']}", mode_tag)
+    bottom_row[0].metric("Št. stanovanj", f"{r['units']}", mode_tag)
 
     # --- investicija ---
-    cols[5].metric("Skupna investicija", eur_fmt(r["econ"]["total_invest"]), eur_m2_fmt(r["econ"]["cost_per_m2_nfa"]))
+    bottom_row[1].metric("Skupna investicija", eur_fmt(r["econ"]["total_invest"]), eur_m2_fmt(r["econ"]["cost_per_m2_nfa"]))
 
     # --- margin ---
     margin_pct = r.get("econ", {}).get("margin_pct")
     if margin_pct is not None:
-        cols[6].metric("Margin %", pct_fmt(margin_pct * 100))
+        bottom_row[2].metric("Margin %", pct_fmt(margin_pct * 100))
     else:
-        cols[6].metric("Margin %", "—")
+        bottom_row[2].metric("Margin %", "—")
 
     # --- status ---
-    cols[7].metric("Status", r["status"])
+    bottom_row[3].metric("Status", r["status"])
 
     if show_detail:
         with st.expander("Podrobnosti izračuna", expanded=False):
